@@ -17,7 +17,9 @@ namespace Dapr.E2E.Test
     using Dapr.E2E.Test.Actors.Reminders;
     using Dapr.E2E.Test.Actors.Timers;
     using Dapr.E2E.Test.Actors.ExceptionTesting;
+    using Dapr.E2E.Test.Actors.Serialization;
     using Dapr.E2E.Test.App.ErrorTesting;
+    using Dapr.Workflow;
     using Microsoft.AspNetCore.Authentication;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Builder;
@@ -25,12 +27,17 @@ namespace Dapr.E2E.Test
     using Microsoft.Extensions.Configuration;
     using Microsoft.Extensions.DependencyInjection;
     using Microsoft.Extensions.Hosting;
+    using System.Threading.Tasks;
+    using System;
 
     /// <summary>
     /// Startup class.
     /// </summary>
     public class Startup
     {
+        bool JsonSerializationEnabled =>
+            System.Linq.Enumerable.Contains(System.Environment.GetCommandLineArgs(), "--json-serialization");
+
         /// <summary>
         /// Initializes a new instance of the <see cref="Startup"/> class.
         /// </summary>
@@ -54,12 +61,38 @@ namespace Dapr.E2E.Test
             services.AddAuthentication().AddDapr();
             services.AddAuthorization(o => o.AddDapr());
             services.AddControllers().AddDapr();
+            // Register a workflow and associated activity
+            services.AddDaprWorkflow(options =>
+            {
+                // Example of registering a "PlaceOrder" workflow function
+                options.RegisterWorkflow<string, string>("PlaceOrder", implementation: async (context, input) =>
+                {
+
+                    var itemToPurchase = input;
+
+                    itemToPurchase = await context.WaitForExternalEventAsync<string>("ChangePurchaseItem");
+
+                    // In real life there are other steps related to placing an order, like reserving
+                    // inventory and charging the customer credit card etc. But let's keep it simple ;)
+                    await context.CallActivityAsync<string>("ShipProduct", itemToPurchase);
+
+                    return itemToPurchase;
+                });
+
+                // Example of registering a "ShipProduct" workflow activity function
+                options.RegisterActivity<string, string>("ShipProduct", implementation: (context, input) =>
+                {
+                    return Task.FromResult($"We are shipping {input} to the customer using our hoard of drones!");
+                });
+            });
             services.AddActors(options =>
             {
+                options.UseJsonSerialization = JsonSerializationEnabled;
                 options.Actors.RegisterActor<ReminderActor>();
                 options.Actors.RegisterActor<TimerActor>();
                 options.Actors.RegisterActor<Regression762Actor>();
                 options.Actors.RegisterActor<ExceptionActor>();
+                options.Actors.RegisterActor<SerializationActor>();
             });
         }
 

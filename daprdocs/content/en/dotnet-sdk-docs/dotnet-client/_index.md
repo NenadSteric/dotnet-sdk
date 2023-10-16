@@ -165,7 +165,7 @@ Console.WriteLine("Got a secret value, I'm not going to be print it, it's a secr
 
 - For a full guide on secrets visit [How-To: Retrieve secrets]({{< ref howto-secrets.md >}}).
 
-### Get Configuration Keys (Alpha)
+### Get Configuration Keys
 ```csharp
 var client = new DaprClientBuilder().Build();
 
@@ -182,7 +182,7 @@ foreach (var item in configItems)
 }
 ```
 
-### Subscribe to Configuration Keys (Alpha)
+### Subscribe to Configuration Keys
 ```csharp
 var client = new DaprClientBuilder().Build();
 
@@ -199,12 +199,91 @@ await foreach (var items in subscribeConfigurationResponse.Source.WithCancellati
 }
 ```
 
+### Distributed lock (Alpha)
+
+#### Acquire a lock
+
+```csharp
+using System;
+using Dapr.Client;
+
+namespace LockService
+{
+    class Program
+    {
+        [Obsolete("Distributed Lock API is in Alpha, this can be removed once it is stable.")]
+        static async Task Main(string[] args)
+        {
+            var daprLockName = "lockstore";
+            var fileName = "my_file_name";
+            var client = new DaprClientBuilder().Build();
+     
+            // Locking with this approach will also unlock it automatically, as this is a disposable object
+            await using (var fileLock = await client.Lock(DAPR_LOCK_NAME, fileName, "random_id_abc123", 60))
+            {
+                if (fileLock.Success)
+                {
+                    Console.WriteLine("Success");
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to lock {fileName}.");
+                }
+            }
+        }
+    }
+}
+```
+
+#### Unlock an existing lock
+
+```csharp
+using System;
+using Dapr.Client;
+
+namespace LockService
+{
+    class Program
+    {
+        static async Task Main(string[] args)
+        {
+            var daprLockName = "lockstore";
+            var client = new DaprClientBuilder().Build();
+
+            var response = await client.Unlock(DAPR_LOCK_NAME, "my_file_name", "random_id_abc123"));
+            Console.WriteLine(response.status);
+        }
+    }
+}
+```
+
+### Manage workflow instances (Alpha)
+
+```csharp
+var daprClient = new DaprClientBuilder().Build();
+
+string instanceId = "MyWorkflowInstance1";
+string workflowComponentName = "dapr"; // alternatively, this could be the name of a workflow component defined in yaml
+string workflowName = "MyWorkflowDefinition";
+var input = new { name = "Billy", age = 30 }; // Any JSON-serializable value is OK
+
+// Start workflow
+var startResponse = await daprClient.StartWorkflowAsync(instanceId, workflowComponentName, workflowName, input);
+
+// Terminate workflow
+await daprClient.TerminateWorkflowAsync(instanceId, workflowComponentName);
+
+// Get workflow metadata
+var getResponse = await daprClient.GetWorkflowAsync(instanceId, workflowComponentName, workflowName);
+```
+
 ## Sidecar APIs
 ### Sidecar Health
 The .NET SDK provides a way to poll for the sidecar health, as well as a convenience method to wait for the sidecar to be ready.
 
 #### Poll for health
 This health endpoint returns true when both the sidecar and your application are up (fully initialized).
+
 ```csharp
 var client = new DaprClientBuilder().Build();
 
