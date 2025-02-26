@@ -13,7 +13,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using Dapr.Client;
 using Microsoft.Extensions.Configuration;
 
@@ -22,7 +21,6 @@ namespace Dapr.Extensions.Configuration
     /// <summary>
     /// Configuration source that provides a <see cref="DaprConfigurationStoreProvider"/>.
     /// </summary>
-    [Obsolete]
     public class DaprConfigurationStoreSource : IConfigurationSource
     {
         /// <summary>

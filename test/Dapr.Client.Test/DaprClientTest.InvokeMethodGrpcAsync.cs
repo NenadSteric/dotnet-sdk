@@ -88,8 +88,7 @@ namespace Dapr.Client.Test
                 Data = Any.Pack(data),
             };
 
-            var response =
-                client.Call<InvokeResponse>()
+            await client.Call<InvokeResponse>()
                 .SetResponse(invokeResponse)
                 .Build();
 
@@ -153,8 +152,7 @@ namespace Dapr.Client.Test
                 Data = Any.Pack(data),
             };
 
-            var response =
-                client.Call<InvokeResponse>()
+            await client.Call<InvokeResponse>()
                 .SetResponse(invokeResponse)
                 .Build();
 
@@ -197,7 +195,7 @@ namespace Dapr.Client.Test
                 .Setup(m => m.InvokeServiceAsync(It.IsAny<Autogen.Grpc.v1.InvokeServiceRequest>(), It.IsAny<CallOptions>()))
                 .Returns(response);
 
-            FluentActions.Awaiting(async () => await client.DaprClient.InvokeMethodGrpcAsync<Request>("test", "test", request)).Should().NotThrow();
+            FluentActions.Awaiting(async () => await client.DaprClient.InvokeMethodGrpcAsync<Request>("test", "test", request)).Should().NotThrowAsync();
         }
 
         [Fact]
@@ -210,8 +208,7 @@ namespace Dapr.Client.Test
                 Data = Any.Pack(data),
             };
 
-            var response =
-                client.Call<InvokeResponse>()
+            await client.Call<InvokeResponse>()
                 .SetResponse(invokeResponse)
                 .Build();
 
@@ -294,7 +291,7 @@ namespace Dapr.Client.Test
 
             // Validate Response
             var invokedResponse = await request.CompleteWithMessageAsync(response);
-            invokeResponse.Name.Should().Be(invokeResponse.Name);
+            invokedResponse.Name.Should().Be(invokeResponse.Name);
         }
 
         [Fact]
@@ -368,7 +365,7 @@ namespace Dapr.Client.Test
             var rpcException = new RpcException(rpcStatus, new Metadata(), rpcExceptionMessage);
 
             client.Mock
-                .Setup(m => m.GetMetadataAsync(It.IsAny<Empty>(), It.IsAny<CallOptions>()))
+                .Setup(m => m.GetMetadataAsync(It.IsAny<GetMetadataRequest>(), It.IsAny<CallOptions>()))
                 .Throws(rpcException);
 
             var ex = await Assert.ThrowsAsync<DaprException>(async () =>
@@ -395,9 +392,10 @@ namespace Dapr.Client.Test
             // Create Response & Respond
             var response = new Autogen.Grpc.v1.GetMetadataResponse()
             {
+                ActorRuntime = new(),
                 Id = "testId",
             };
-            response.ActiveActorsCount.Add(new ActiveActorsCount { Type = "testType", Count = 1 });
+            response.ActorRuntime.ActiveActors.Add(new ActiveActorsCount { Type = "testType", Count = 1 });
             response.RegisteredComponents.Add(new RegisteredComponents { Name = "testName", Type = "testType", Version = "V1" });
             response.ExtendedMetadata.Add("e1", "v1");
 

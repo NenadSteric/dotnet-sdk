@@ -58,6 +58,7 @@ namespace Dapr.E2E.Test
                 "--components-path", componentsPath,
                 "--config", configPath,
                 "--log-level", "debug",
+                "--dapr-http-max-request-size", "32",
 
             };
 
@@ -87,6 +88,11 @@ namespace Dapr.E2E.Test
                 // The first argument is the port, if the application needs it.
                 arguments.AddRange(new[] { "--", $"{appPort.ToString(CultureInfo.InvariantCulture)}" });
                 arguments.AddRange(new[] { "--urls", $"http://localhost:{appPort.ToString(CultureInfo.InvariantCulture)}", });
+            }
+
+            if (configuration.AppJsonSerialization)
+            {
+                arguments.AddRange(new[] { "--json-serialization" });
             }
 
             // TODO: we don't do any quoting right now because our paths are guaranteed not to contain spaces
@@ -127,24 +133,14 @@ namespace Dapr.E2E.Test
         private static string GetTargetFrameworkName()
         {
             var targetFrameworkName = ((TargetFrameworkAttribute)Assembly.GetExecutingAssembly().GetCustomAttributes(typeof(TargetFrameworkAttribute), false).FirstOrDefault()).FrameworkName;
-            string frameworkMoniker;
-            if (targetFrameworkName == ".NETCoreApp,Version=v3.1")
+
+            return targetFrameworkName switch
             {
-                frameworkMoniker = "netcoreapp3.1";
-            }
-            else if (targetFrameworkName == ".NETCoreApp,Version=v5.0")
-            {
-                frameworkMoniker = "net5";
-            }
-            else if (targetFrameworkName == ".NETCoreApp,Version=v6.0")
-            {
-                frameworkMoniker = "net6";
-            }
-            else
-            {
-                frameworkMoniker = "net7";
-            }
-            return frameworkMoniker;
+                ".NETCoreApp,Version=v6.0" => "net6",
+                ".NETCoreApp,Version=v7.0" => "net7",
+                ".NETCoreApp,Version=v8.0" => "net8",
+                _ => throw new InvalidOperationException($"Unsupported target framework: {targetFrameworkName}")
+            };
         }
 
         private static (int, int, int, int) GetFreePorts()

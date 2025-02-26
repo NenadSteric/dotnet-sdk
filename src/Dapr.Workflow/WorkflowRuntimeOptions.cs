@@ -11,6 +11,8 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
+using Grpc.Net.Client;
+
 namespace Dapr.Workflow
 {
     using System;
@@ -18,7 +20,6 @@ namespace Dapr.Workflow
     using System.Threading.Tasks;
     using Microsoft.DurableTask;
     using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Logging;
 
     /// <summary>
     /// Defines runtime options for workflows.
@@ -30,6 +31,11 @@ namespace Dapr.Workflow
         /// </summary>
         readonly Dictionary<string, Action<DurableTaskRegistry>> factories = new();
 
+        /// <summary>
+        /// Override GrpcChannelOptions.
+        /// </summary>
+        internal GrpcChannelOptions? GrpcChannelOptions { get; private set; }
+        
         /// <summary>
         /// Initializes a new instance of the <see cref="WorkflowRuntimeOptions"/> class.
         /// </summary>
@@ -52,9 +58,10 @@ namespace Dapr.Workflow
             {
                 registry.AddOrchestratorFunc<TInput, TOutput>(name, (innerContext, input) =>
                 {
-                    WorkflowContext workflowContext = new(innerContext);
+                    WorkflowContext workflowContext = new DaprWorkflowContext(innerContext);
                     return implementation(workflowContext, input);
                 });
+                WorkflowLoggingService.LogWorkflowName(name);
             });
         }
 
@@ -74,6 +81,7 @@ namespace Dapr.Workflow
                     TWorkflow workflow = Activator.CreateInstance<TWorkflow>();
                     return new OrchestratorWrapper(workflow);
                 });
+                WorkflowLoggingService.LogWorkflowName(name);
             });
         }
 
@@ -92,6 +100,7 @@ namespace Dapr.Workflow
                     WorkflowActivityContext activityContext = new(innerContext);
                     return implementation(activityContext, input);
                 });
+                WorkflowLoggingService.LogActivityName(name);
             });
         }
 
@@ -112,7 +121,17 @@ namespace Dapr.Workflow
                     TActivity activity = ActivatorUtilities.CreateInstance<TActivity>(serviceProvider);
                     return new ActivityWrapper(activity);
                 });
+                WorkflowLoggingService.LogActivityName(name);
             });
+        }
+        
+        /// <summary>
+        /// Uses the provided <paramref name="grpcChannelOptions" /> for creating the <see cref="GrpcChannel" />.
+        /// </summary>
+        /// <param name="grpcChannelOptions">The <see cref="GrpcChannelOptions" /> to use for creating the <see cref="GrpcChannel" />.</param>
+        public void UseGrpcChannelOptions(GrpcChannelOptions grpcChannelOptions)
+        {
+            this.GrpcChannelOptions = grpcChannelOptions;
         }
 
         /// <summary>
@@ -145,7 +164,7 @@ namespace Dapr.Workflow
 
             public Task<object?> RunAsync(TaskOrchestrationContext context, object? input)
             {
-                return this.workflow.RunAsync(new WorkflowContext(context), input);
+                return this.workflow.RunAsync(new DaprWorkflowContext(context), input);
             }
         }
 

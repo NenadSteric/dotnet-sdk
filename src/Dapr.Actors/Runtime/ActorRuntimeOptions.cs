@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------
 // Copyright 2021 The Dapr Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -10,6 +10,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 // ------------------------------------------------------------------------
+
+#nullable enable
 
 using System;
 using System.Text.Json;
@@ -32,8 +34,9 @@ namespace Dapr.Actors.Runtime
         {
             Enabled = false,
         };
+        private bool useJsonSerialization = false;
         private JsonSerializerOptions jsonSerializerOptions = JsonSerializerDefaults.Web;
-        private string daprApiToken = DaprDefaults.GetDefaultDaprApiToken();
+        private string daprApiToken = string.Empty;
         private int? remindersStoragePartitions = null;
 
         /// <summary>
@@ -151,7 +154,22 @@ namespace Dapr.Actors.Runtime
             }
         }
 
-        
+        /// <summary>
+        /// Enable JSON serialization for actor proxy message serialization in both remoting and non-remoting invocations.
+        /// </summary>
+        public bool UseJsonSerialization
+        {
+            get
+            {
+                return this.useJsonSerialization;
+            }
+
+            set
+            {
+                this.useJsonSerialization = value;
+            }
+        }
+
         /// <summary>
         /// The <see cref="JsonSerializerOptions"/> to use for actor state persistence and message deserialization
         /// </summary>
@@ -164,19 +182,14 @@ namespace Dapr.Actors.Runtime
 
             set
             {
-                if (value is null)
-                {
-                    throw new ArgumentNullException(nameof(JsonSerializerOptions), $"{nameof(ActorRuntimeOptions)}.{nameof(JsonSerializerOptions)} cannot be null");
-                }
-
-                this.jsonSerializerOptions = value;
+                this.jsonSerializerOptions = value ?? throw new ArgumentNullException(nameof(JsonSerializerOptions), $"{nameof(ActorRuntimeOptions)}.{nameof(JsonSerializerOptions)} cannot be null");
             }
         }
 
         /// <summary>
         /// The <see cref="DaprApiToken"/> to add to the headers in requests to Dapr runtime
         /// </summary>
-        public string DaprApiToken
+        public string? DaprApiToken
         {
             get
             {
@@ -185,12 +198,7 @@ namespace Dapr.Actors.Runtime
 
             set
             {
-                if (value is null)
-                {
-                    throw new ArgumentNullException(nameof(DaprApiToken), $"{nameof(ActorRuntimeOptions)}.{nameof(DaprApiToken)} cannot be null");
-                }
-
-                this.daprApiToken = value;
+                this.daprApiToken = value ?? throw new ArgumentNullException(nameof(DaprApiToken), $"{nameof(ActorRuntimeOptions)}.{nameof(DaprApiToken)} cannot be null");
             }
         }
 
@@ -220,10 +228,11 @@ namespace Dapr.Actors.Runtime
         /// </summary>
         /// <remarks>
         /// The URI endpoint to use for HTTP calls to the Dapr runtime. The default value will be 
-        /// <c>http://127.0.0.1:DAPR_HTTP_PORT</c> where <c>DAPR_HTTP_PORT</c> represents the value of the 
-        /// <c>DAPR_HTTP_PORT</c> environment variable.
+        /// <c>DAPR_HTTP_ENDPOINT</c> first, or <c>http://127.0.0.1:DAPR_HTTP_PORT</c> as fallback
+        /// where <c>DAPR_HTTP_ENDPOINT</c> and <c>DAPR_HTTP_PORT</c> represents the value of the
+        /// corresponding environment variables. 
         /// </remarks>
         /// <value></value>
-        public string HttpEndpoint { get; set; } = DaprDefaults.GetDefaultHttpEndpoint();
+        public string? HttpEndpoint { get; set; }
     }
 }

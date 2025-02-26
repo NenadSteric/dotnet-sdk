@@ -14,12 +14,7 @@
 namespace Dapr.Actors
 {
     using System;
-    using System.Globalization;
     using System.IO;
-    using System.Runtime.Serialization;
-    using System.Text;
-    using System.Xml;
-    using Dapr.Actors.Resources;
     using Microsoft.Extensions.Logging;
 
     /// <summary>
@@ -93,7 +88,7 @@ namespace Dapr.Actors
             catch (Exception e)
             {
                 // swallowing the exception
-                logger?.LogWarning("RemoteException", "DeSerialization failed : Reason  {0}", e);
+                logger?.LogWarning("RemoteException: DeSerialization failed : Reason {0}", e);
             }
 
             result = null;

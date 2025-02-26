@@ -4,13 +4,11 @@ using Microsoft.Extensions.Hosting;
 using Dapr.Client;
 using Dapr.Extensions.Configuration;
 using System.Collections.Generic;
-using System.Threading;
 
 namespace ConfigurationApi
 {
     public class Program
     {
-        [Obsolete]
         public static void Main(string[] args)
         {
             Console.WriteLine("Starting application.");

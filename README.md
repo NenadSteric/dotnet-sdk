@@ -1,9 +1,6 @@
 # Dapr SDK for .NET
 
-[![Build Status](https://github.com/dapr/dotnet-sdk/workflows/build/badge.svg)](https://github.com/dapr/dotnet-sdk/actions?workflow=build)
-[![codecov](https://codecov.io/gh/dapr/dotnet-sdk/branch/master/graph/badge.svg)](https://codecov.io/gh/dapr/dotnet-sdk)
-[![License: Apache](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](http://www.apache.org/licenses/LICENSE-2.0)
-[![FOSSA Status](https://app.fossa.com/api/projects/custom%2B162%2Fgithub.com%2Fdapr%2Fcomponents-contrib.svg?type=shield)](https://app.fossa.com/projects/custom%2B162%2Fgithub.com%2Fdapr%2Fcomponents-contrib?ref=badge_shield)
+[![NuGet Version](https://img.shields.io/nuget/v/Dapr.Client?logo=nuget&label=Latest%20version&style=flat)](https://www.nuget.org/packages/Dapr.Client) [![NuGet Downloads](https://img.shields.io/nuget/dt/Dapr.Client?style=flat&logo=nuget&label=Downloads)](https://www.nuget.org/packages/Dapr.Client) [![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/dapr/dotnet-sdk/.github%2Fworkflows%2Fsdk_build.yml?branch=master&label=Build&logo=github)](https://github.com/dapr/dotnet-sdk/actions/workflows/sdk_build.yml) [![codecov](https://codecov.io/gh/dapr/dotnet-sdk/branch/master/graph/badge.svg)](https://codecov.io/gh/dapr/dotnet-sdk) [![GitHub License](https://img.shields.io/github/license/dapr/dotnet-sdk?style=flat&label=License&logo=github)](https://github.com/dapr/dotnet-sdk/blob/master/LICENSE) [![GitHub issue custom search in repo](https://img.shields.io/github/issues-search/dapr/dotnet-sdk?query=type%3Aissue%20is%3Aopen%20label%3A%22good%20first%20issue%22&label=Good%20first%20issues&style=flat&logo=github)](https://github.com/dapr/dotnet-sdk/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) [![Discord](https://img.shields.io/discord/778680217417809931?label=Discord&style=flat&logo=discord)](http://bit.ly/dapr-discord) [![YouTube Channel Views](https://img.shields.io/youtube/channel/views/UCtpSQ9BLB_3EXdWAUQYwnRA?style=flat&label=YouTube%20views&logo=youtube)](https://youtube.com/@daprdev) [![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/daprdev?logo=x&style=flat)](https://twitter.com/daprdev)
 
 
 Dapr SDK for .NET allows you to:
@@ -48,10 +45,11 @@ This repo builds the following packages:
 - Dapr.Actors
 - Dapr.Actors.AspNetCore
 - Dapr.Extensions.Configuration
+- Dapr.Workflow
 
 ### Prerequisites
 
-Each project is a normal C# project. At minimum, you need [.NET 5.0 SDK](https://dotnet.microsoft.com/download/dotnet/5.0) to build, test, and generate NuGet packages.
+Each project is a normal C# project. At minimum, you need [.NET 6.0 SDK](https://dotnet.microsoft.com/download/dotnet/6.0) to build, test, and generate NuGet packages.
 
 Also make sure to reference the [.NET SDK contribution guide](https://docs.dapr.io/contributing/sdk-contrib/dotnet-contributing/)
 

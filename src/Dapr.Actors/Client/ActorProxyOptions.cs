@@ -45,7 +45,7 @@ namespace Dapr.Actors.Client
         /// <summary>
         /// The Dapr Api Token that is added to the header for all requests.
         /// </summary>
-        public string DaprApiToken { get; set; } = DaprDefaults.GetDefaultDaprApiToken();
+        public string DaprApiToken { get; set; } = DaprDefaults.GetDefaultDaprApiToken(null);
 
         /// <summary>
         /// Gets or sets the HTTP endpoint URI used to communicate with the Dapr sidecar.
@@ -62,5 +62,10 @@ namespace Dapr.Actors.Client
         /// The timeout allowed for an actor request. Can be set to System.Threading.Timeout.InfiniteTimeSpan to disable any timeouts.
         /// </summary>
         public TimeSpan? RequestTimeout { get; set; } = null;
+
+        /// <summary>
+        /// Enable JSON serialization for actor proxy message serialization in both remoting and non-remoting invocations.
+        /// </summary>
+        public bool UseJsonSerialization { get; set; }
     }
 }

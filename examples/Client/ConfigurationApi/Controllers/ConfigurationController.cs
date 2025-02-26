@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using ControllerSample;
 using Dapr;
@@ -13,7 +11,6 @@ namespace ConfigurationApi.Controllers
 {
     [ApiController]
     [Route("configuration")]
-    [Obsolete]
     public class ConfigurationController : ControllerBase
     {
         private ILogger<ConfigurationController> logger;

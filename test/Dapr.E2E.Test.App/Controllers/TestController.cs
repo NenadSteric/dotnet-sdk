@@ -15,8 +15,6 @@ namespace Dapr.E2E.Test
 {
     using System;
     using System.Threading.Tasks;
-    using Dapr;
-    using Dapr.Client;
     using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Mvc;
     using Microsoft.Extensions.Logging;
@@ -65,5 +63,14 @@ namespace Dapr.E2E.Test
             };
             return account;
         }
+
+        [Authorize("Dapr")]
+        [HttpGet("DelayedResponse")]
+        public async Task<IActionResult> DelayedResponse()
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2));
+            return Ok();
+        }
+
     }
 }

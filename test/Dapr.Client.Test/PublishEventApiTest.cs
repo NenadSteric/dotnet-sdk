@@ -11,6 +11,11 @@
 // limitations under the License.
 // ------------------------------------------------------------------------
 
+using System.Linq;
+using System.Net.Http;
+using System.Text.Json.Serialization;
+using Grpc.Net.Client;
+
 namespace Dapr.Client.Test
 {
     using System;
@@ -49,6 +54,44 @@ namespace Dapr.Client.Test
             envelope.Topic.Should().Be("test");
             jsonFromRequest.Should().Be(JsonSerializer.Serialize(publishData, client.InnerClient.JsonSerializerOptions));
             envelope.Metadata.Count.Should().Be(0);
+        }
+
+        [Fact]
+        public async Task PublishEvent_ShouldRespectJsonStringEnumConverter()
+        {
+            //The following mimics how the TestClient is built, but adds the JsonStringEnumConverter to the serialization options
+            var handler = new TestClient.CapturingHandler();
+            var httpClient = new HttpClient(handler);
+            var clientBuilder = new DaprClientBuilder()
+                .UseJsonSerializationOptions(new JsonSerializerOptions()
+                {
+                    Converters = {new JsonStringEnumConverter(null, false)}
+                })
+                .UseHttpClientFactory(() => httpClient)
+                .UseGrpcChannelOptions(new GrpcChannelOptions()
+                {
+                    HttpClient = httpClient, ThrowOperationCanceledOnCancellation = true
+                });
+            var client = new TestClient<DaprClient>(clientBuilder.Build(), handler);
+            
+            //Ensure that the JsonStringEnumConverter is registered
+            client.InnerClient.JsonSerializerOptions.Converters.Count.Should().Be(1);
+            client.InnerClient.JsonSerializerOptions.Converters.First().GetType().Name.Should()
+                .Match(nameof(JsonStringEnumConverter));
+
+            var publishData = new Widget {Size = "Large", Color = WidgetColor.Red};
+            var request = await client.CaptureGrpcRequestAsync(async daprClient =>
+            {
+                await daprClient.PublishEventAsync<Widget>(TestPubsubName, "test", publishData);
+            });
+
+            request.Dismiss();
+
+            var envelope = await request.GetRequestEnvelopeAsync<PublishEventRequest>();
+            var jsonFromRequest = envelope.Data.ToStringUtf8();
+            jsonFromRequest.Should()
+                .Be(JsonSerializer.Serialize(publishData, client.InnerClient.JsonSerializerOptions));
+            jsonFromRequest.Should().Match("{\"Size\":\"Large\",\"Color\":\"Red\"}");
         }
 
         [Fact]
@@ -98,7 +141,6 @@ namespace Dapr.Client.Test
             request.Dismiss();
 
             var envelope = await request.GetRequestEnvelopeAsync<PublishEventRequest>();
-            var jsonFromRequest = envelope.Data.ToStringUtf8();
 
             envelope.PubsubName.Should().Be(TestPubsubName);
             envelope.Topic.Should().Be("test");
@@ -170,7 +212,6 @@ namespace Dapr.Client.Test
         {
             await using var client = TestClient.CreateForDaprClient();
 
-            var publishData = new PublishData() { PublishObjectParameter = "testparam" };
             var cloudEvent = new CloudEvent
             {
                 Source = new Uri("urn:testsource"),
@@ -258,6 +299,19 @@ namespace Dapr.Client.Test
         private class PublishData
         {
             public string PublishObjectParameter { get; set; }
+        }
+
+        private class Widget
+        {
+            public string Size { get; set; }
+            public WidgetColor Color { get; set; }
+        }
+
+        private enum WidgetColor
+        {
+            Red,
+            Green,
+            Yellow
         }
     }
 }

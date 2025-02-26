@@ -1,4 +1,4 @@
-// ------------------------------------------------------------------------
+﻿// ------------------------------------------------------------------------
 // Copyright 2021 The Dapr Authors
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,14 +22,12 @@ namespace Dapr.Client.Test
     using FluentAssertions;
     using Google.Protobuf;
     using Grpc.Core;
-    using Grpc.Net.Client;
     using Moq;
     using StateConsistency = Dapr.Client.Autogen.Grpc.v1.StateOptions.Types.StateConsistency;
     using StateConcurrency = Dapr.Client.Autogen.Grpc.v1.StateOptions.Types.StateConcurrency;
     using Xunit;
     using System.Threading;
     using System.Net.Http;
-    using System.Text;
 
     public class StateApiTest
     {
@@ -75,6 +73,30 @@ namespace Dapr.Client.Test
             state.Should().HaveCount(1);
         }
 
+        [Fact]
+        public async Task GetBulkStateAsync_CanReadDeserializedState()
+        {
+            await using var client = TestClient.CreateForDaprClient();
+
+            var key = "test";
+            var request = await client.CaptureGrpcRequestAsync(async daprClient =>
+            {
+                return await daprClient.GetBulkStateAsync<Widget>("testStore", new List<string>() {key}, null);
+            });
+
+            // Create Response & Respond
+            const string size = "small";
+            const string color = "yellow";
+            var data = new Widget() {Size = size, Color = color};
+            var envelope = MakeGetBulkStateResponse<Widget>(key, data);
+            var state = await request.CompleteWithMessageAsync(envelope);
+
+            // Get response and validate
+            state.Should().HaveCount(1);
+            state[0].Value.Size.Should().Match(size);
+            state[0].Value.Color.Should().Match(color);
+        }
+        
         [Fact]
         public async Task GetBulkStateAsync_WrapsRpcException()
         {
@@ -481,7 +503,7 @@ namespace Dapr.Client.Test
             req1.Request.Etag.Value.Should().Be("testEtag");
             req1.Request.Metadata.Count.Should().Be(1);
             req1.Request.Metadata["a"].Should().Be("b");
-            req1.Request.Options.Concurrency.Should().Be(2);
+            req1.Request.Options.Concurrency.Should().Be(StateConcurrency.ConcurrencyLastWrite);
 
             var req2 = envelope.Operations[1];
             req2.Request.Key.Should().Be("stateKey2");
@@ -815,8 +837,7 @@ namespace Dapr.Client.Test
         {
             var client = new MockClient();
 
-            var response = client.CallStateApi<string>()
-            .Build();
+            await client.CallStateApi<string>().Build();
 
             var rpcException = new RpcException(new Status(StatusCode.Internal, "Network Error"));
 
@@ -837,8 +858,8 @@ namespace Dapr.Client.Test
         {
             var client = new MockClient();
 
-            var response = client.CallStateApi<string>()
-            .Build();
+            await client.CallStateApi<string>()
+                .Build();
 
             var rpcException = new RpcException(new Status(StatusCode.Aborted, $"failed saving state in state store testStore"));
             // Setup the mock client to throw an Rpc Exception with the expected details info
@@ -855,8 +876,8 @@ namespace Dapr.Client.Test
         {
             var client = new MockClient();
 
-            var response = client.CallStateApi<string>()
-            .Build();
+            await client.CallStateApi<string>()
+                .Build();
 
             await FluentActions.Awaiting(async () => await client.DaprClient.TrySaveStateAsync("test", "test", "testValue", null))
                 .Should().ThrowAsync<ArgumentException>();
@@ -883,8 +904,8 @@ namespace Dapr.Client.Test
         {
             var client = new MockClient();
 
-            var response = client.CallStateApi<string>()
-            .Build();
+            await client.CallStateApi<string>()
+                .Build();
 
             var rpcException = new RpcException(new Status(StatusCode.Internal, "Network Error"));
 
@@ -905,8 +926,8 @@ namespace Dapr.Client.Test
         {
             var client = new MockClient();
 
-            var response = client.CallStateApi<string>()
-            .Build();
+            await client.CallStateApi<string>()
+                .Build();
 
             await FluentActions.Awaiting(async () => await client.DaprClient.TryDeleteStateAsync("test", "test", null))
                 .Should().ThrowAsync<ArgumentException>();
@@ -933,8 +954,8 @@ namespace Dapr.Client.Test
         {
             var client = new MockClient();
 
-            var response = client.CallStateApi<string>()
-            .Build();
+            await client.CallStateApi<string>()
+                .Build();
 
             var rpcException = new RpcException(new Status(StatusCode.Aborted, $"failed deleting state with key test"));
             // Setup the mock client to throw an Rpc Exception with the expected details info
